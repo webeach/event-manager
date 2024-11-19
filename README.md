@@ -1,5 +1,8 @@
 # `EventManager`
 
+[![https://www.npmjs.com/package/@webeach/event-manager](https://img.shields.io/npm/v/@webeach/event-manager.svg)](https://www.npmjs.com/package/@webeach/event-manager)
+[![https://www.npmjs.com/package/@webeach/event-manager](https://img.shields.io/npm/dw/@webeach/event-manager.svg)](https://www.npmjs.com/package/@webeach/event-manager)
+
 **EventManager** is a library for simplifying event handling in JavaScript. With this package, you can easily manage event subscriptions, remove them, and handle them in a more convenient way.
 
 Main features of this library:
