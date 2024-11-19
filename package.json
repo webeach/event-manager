@@ -1,4 +1,92 @@
 {
-  "name": "event-manager",
-  "packageManager": "yarn@4.5.1"
+  "name": "@webeach/event-manager",
+  "version": "0.1.0",
+  "author": "Ruslan Martynov",
+  "description": "EventManager is a library for simplifying event handling in JavaScript",
+  "keywords": [
+    "events",
+    "emitter",
+    "event-handling",
+    "event-utilities",
+    "dom-events",
+    "EventDispatcher",
+    "addEventListener",
+    "addListener",
+    "subscribe",
+    "typescript"
+  ],
+  "license": "MIT",
+  "packageManager": "yarn@4.5.1",
+  "repository": "git+ssh://git@github.com/webeach/event-manager.git",
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org"
+  },
+  "engines": {
+    "node": "22.2.0"
+  },
+  "main": "./lib/cjs/index.js",
+  "module": "./lib/esm/index.js",
+  "types": "./lib/types.d.ts",
+  "exports": {
+    "import": "./lib/esm/index.js",
+    "require": "./lib/cjs/index.js",
+    "types": "./lib/types.d.ts"
+  },
+  "files": [
+    "lib",
+    "README.md",
+    "README.ru.md"
+  ],
+  "scripts": {
+    "build": "rollup -c",
+    "lint": "eslint",
+    "lint:fix": "eslint --fix",
+    "lint:types": "tsc --noEmit",
+    "test": "jest",
+    "release": "semantic-release",
+    "clean": "rm -rf dist",
+    "prepare": "is-ci || husky"
+  },
+  "lint-staged": {
+    "**/*.{js,jsx,ts,tsx}": [
+      "yarn lint"
+    ]
+  },
+  "devDependencies": {
+    "@commitlint/cli": "^19.6.0",
+    "@commitlint/config-conventional": "^19.6.0",
+    "@eslint/js": "^9.12.0",
+    "@rollup/plugin-commonjs": "^28.0.1",
+    "@rollup/plugin-node-resolve": "^15.3.0",
+    "@rollup/plugin-typescript": "^12.1.1",
+    "@semantic-release/changelog": "^6.0.3",
+    "@semantic-release/commit-analyzer": "^13.0.0",
+    "@semantic-release/git": "^10.0.1",
+    "@semantic-release/npm": "^12.0.1",
+    "@semantic-release/release-notes-generator": "^14.0.1",
+    "@types/is-ci": "^3",
+    "@types/jest": "^29.5.14",
+    "@types/node": "^22.7.6",
+    "eslint": "^9.12.0",
+    "eslint-config-prettier": "^9.1.0",
+    "eslint-plugin-prettier": "^5.2.1",
+    "eslint-plugin-simple-import-sort": "^12.1.1",
+    "globals": "^15.11.0",
+    "husky": "^9.1.6",
+    "is-ci": "^3.0.1",
+    "jest": "^29.7.0",
+    "jest-environment-jsdom": "^29.7.0",
+    "lint-staged": "^15.2.10",
+    "prettier": "^3.3.3",
+    "release-it": "^17.10.0",
+    "rollup": "^4.24.0",
+    "rollup-plugin-dts": "^6.1.1",
+    "semantic-release": "^24.2.0",
+    "semantic-release-yarn": "^3.0.2",
+    "ts-jest": "^29.2.5",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.6.3",
+    "typescript-eslint": "^8.10.0"
+  }
 }

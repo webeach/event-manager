@@ -1,0 +1,3 @@
+commitlint --edit
+yarn lint-staged
+yarn lint:types
