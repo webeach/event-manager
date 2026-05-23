@@ -1,0 +1,395 @@
+# @webeach/event-manager
+
+> A lightweight JavaScript/TypeScript library that simplifies event listener management — subscribe, unsubscribe, and dispatch events with a clean chainable API and zero runtime dependencies.
+
+## Problem it solves
+
+Native `addEventListener` / `removeEventListener` requires keeping exact function references to remove listeners, leads to boilerplate when managing multiple events, and silently fails if options like `{ capture: true }` don't match on removal.
+
+`@webeach/event-manager` tracks all registered handlers internally so you never hold references yourself. Remove one event, several, or all at once — in a single call.
+
+## Installation
+
+```bash
+npm install @webeach/event-manager
+# or
+pnpm add @webeach/event-manager
+# or
+yarn add @webeach/event-manager
+```
+
+Browser via CDN (no build step):
+
+```html
+<script type="module">
+  import { listen } from 'https://unpkg.com/@webeach/event-manager';
+</script>
+```
+
+## Core API
+
+### `listen(target?, handlers?)`
+
+Creates an `EventManager` for the given target. Pass nothing or `null` to create a standalone custom event bus.
+
+```js
+import { listen } from '@webeach/event-manager';
+
+listen(window);                          // Window events
+listen(element);                         // DOM element events
+listen(element, { click: handler });     // with initial handlers
+listen();                                // custom event bus
+```
+
+### `.add(type, handler | handler[], options?)`
+
+Registers one or more handlers. Returns `this` for chaining.
+
+Options: `{ capture?: boolean, once?: boolean, passive?: boolean }`
+
+```js
+listen(button)
+  .add('click', () => console.log('clicked'))
+  .add('focus', () => console.log('focused'));
+
+// Multiple handlers at once
+listen(button).add('click', [handlerA, handlerB]);
+
+// Options
+listen(button).add('click', handler, { capture: true });
+listen(button).add('click', handler, { once: true });
+listen(button).add('scroll', handler, { passive: true });
+```
+
+### `.capture(type, handler | handler[])`
+
+Shorthand for `.add(type, handler, { capture: true })`.
+
+### `.once(type, handler | handler[])`
+
+Shorthand for `.add(type, handler, { once: true })`. The handler fires once and is automatically removed.
+
+### `.remove(type | type[])`
+
+Removes handlers for specific event type(s). Only affects handlers registered through this instance.
+
+```js
+listener.remove('click');
+listener.remove(['click', 'focus', 'keydown']);
+```
+
+### `.remove()`
+
+Removes all handlers registered through this instance.
+
+```js
+listener.remove();
+```
+
+### `.trigger(type, detail?)`
+
+Dispatches a `CustomEvent` with optional detail payload.
+
+```js
+listener.trigger('my-event');
+listener.trigger('my-event', { value: 42 });
+```
+
+### `.trigger(event)`
+
+Dispatches an existing `Event` object directly.
+
+```js
+listener.trigger(new CustomEvent('my-event'));
+```
+
+## Usage patterns
+
+### Subscribe and unsubscribe
+
+```js
+const listener = listen(button).add('click', handler);
+
+// Remove after 10 seconds
+setTimeout(() => listener.remove('click'), 10000);
+```
+
+### Remove all at once
+
+```js
+const listener = listen(window)
+  .add('focus', onFocus)
+  .add('resize', onResize)
+  .add('scroll', onScroll);
+
+listener.remove(); // removes all three
+```
+
+### Initial handler map (shorthand)
+
+```js
+listen(button, {
+  click: () => console.log('clicked'),
+  focus: () => console.log('focused'),
+  keydown: (e) => console.log(e.key),
+});
+```
+
+### Custom event bus
+
+```js
+const bus = listen();
+
+bus.add('greet', (e) => console.log(`Hello, ${e.detail.name}!`));
+
+setTimeout(() => {
+  bus.trigger('greet', { name: 'Alex' });
+}, 1000);
+```
+
+### React useEffect cleanup
+
+```jsx
+useEffect(() => {
+  const { remove } = listen(window, {
+    scroll: () => setScrollY(window.scrollY),
+    resize: () => setWidth(window.innerWidth),
+  });
+  return () => remove();
+}, []);
+```
+
+### Tracking scroll position
+
+```js
+const listener = listen(window).add('scroll', () => {
+  document.querySelector('.back-to-top').hidden = window.scrollY < 200;
+});
+```
+
+## TypeScript
+
+The library is fully typed. Event types are inferred automatically from the target.
+
+```ts
+// Window events — fully typed
+listen(window).add('resize', (event) => {
+  // event: UIEvent
+});
+
+// DOM element events — fully typed
+listen(button).add('click', (event) => {
+  // event: MouseEvent
+});
+
+// Custom event bus with typed events
+interface AppEvents {
+  'user:login': CustomEvent<{ userId: string }>;
+  'cart:update': CustomEvent<{ count: number }>;
+}
+
+const bus = listen<EventTarget, AppEvents>();
+
+bus.add('user:login', (e) => {
+  console.log(e.detail.userId); // typed
+});
+
+bus.trigger('user:login', { userId: '42' });
+```
+
+## Key facts
+
+- Zero runtime dependencies
+- Works with `window`, any DOM element, and custom `EventTarget` instances
+- Supports `capture`, `once`, and `passive` listener options
+- All methods return `this` — fully chainable
+- `remove([...])` validates all types atomically before removing any
+- Destructuring-safe: `const { remove } = listen(el)` works correctly
+- Bundle size: ~1 KB brotli-compressed
+
+## Migration from native addEventListener
+
+### Single event
+
+```js
+// Before
+function handleClick(event) {
+  console.log('clicked', event);
+}
+button.addEventListener('click', handleClick);
+button.removeEventListener('click', handleClick);
+
+// After
+const listener = listen(button).add('click', (event) => {
+  console.log('clicked', event);
+});
+listener.remove('click');
+```
+
+### Multiple events
+
+```js
+// Before
+const handleClick = () => {};
+const handleFocus = () => {};
+const handleKeydown = () => {};
+
+button.addEventListener('click', handleClick);
+button.addEventListener('focus', handleFocus);
+button.addEventListener('keydown', handleKeydown);
+
+// Later...
+button.removeEventListener('click', handleClick);
+button.removeEventListener('focus', handleFocus);
+button.removeEventListener('keydown', handleKeydown);
+
+// After
+const listener = listen(button, {
+  click: () => {},
+  focus: () => {},
+  keydown: () => {},
+});
+
+listener.remove();
+```
+
+### Capture phase
+
+```js
+// Before
+element.addEventListener('click', handler, { capture: true });
+element.removeEventListener('click', handler, { capture: true }); // must match!
+
+// After
+const listener = listen(element).capture('click', handler);
+listener.remove('click'); // options are tracked internally, no need to repeat them
+```
+
+### Once
+
+```js
+// Before
+function handleOnce(event) {
+  doSomething(event);
+  button.removeEventListener('click', handleOnce);
+}
+button.addEventListener('click', handleOnce);
+
+// After
+listen(button).once('click', (event) => doSomething(event));
+```
+
+## React patterns
+
+### useEffect with single event
+
+```jsx
+// Before
+useEffect(() => {
+  const handler = () => setCount((c) => c + 1);
+  window.addEventListener('click', handler);
+  return () => window.removeEventListener('click', handler);
+}, []);
+
+// After
+useEffect(() => {
+  const { remove } = listen(window).add('click', () => setCount((c) => c + 1));
+  return () => remove();
+}, []);
+```
+
+### useEffect with multiple events
+
+```jsx
+// Before
+useEffect(() => {
+  const onScroll = () => setScrollY(window.scrollY);
+  const onResize = () => setWidth(window.innerWidth);
+  const onFocus = () => setFocused(true);
+  const onBlur = () => setFocused(false);
+
+  window.addEventListener('scroll', onScroll);
+  window.addEventListener('resize', onResize);
+  window.addEventListener('focus', onFocus);
+  window.addEventListener('blur', onBlur);
+
+  return () => {
+    window.removeEventListener('scroll', onScroll);
+    window.removeEventListener('resize', onResize);
+    window.removeEventListener('focus', onFocus);
+    window.removeEventListener('blur', onBlur);
+  };
+}, []);
+
+// After
+useEffect(() => {
+  const { remove } = listen(window, {
+    scroll: () => setScrollY(window.scrollY),
+    resize: () => setWidth(window.innerWidth),
+    focus: () => setFocused(true),
+    blur: () => setFocused(false),
+  });
+  return () => remove();
+}, []);
+```
+
+### Custom hook
+
+```tsx
+import { useEffect } from 'react';
+import { listen } from '@webeach/event-manager';
+
+function useWindowEvent<K extends keyof WindowEventMap>(
+  type: K,
+  handler: (event: WindowEventMap[K]) => void,
+) {
+  useEffect(() => {
+    const { remove } = listen(window).add(type, handler);
+    return () => remove();
+  }, [type, handler]);
+}
+
+// Usage
+useWindowEvent('resize', () => console.log('resized'));
+```
+
+### Component with hover state
+
+```tsx
+// Before
+const ref = useRef<HTMLButtonElement>(null);
+
+useEffect(() => {
+  const el = ref.current;
+  if (!el) return;
+
+  const onEnter = () => setText('Go to cart');
+  const onLeave = () => setText('Shopping cart');
+
+  el.addEventListener('mouseenter', onEnter);
+  el.addEventListener('mouseleave', onLeave);
+
+  return () => {
+    el.removeEventListener('mouseenter', onEnter);
+    el.removeEventListener('mouseleave', onLeave);
+  };
+}, []);
+
+// After
+const ref = useRef<HTMLButtonElement>(null);
+
+useEffect(() => {
+  if (!ref.current) return;
+  const { remove } = listen(ref.current, {
+    mouseenter: () => setText('Go to cart'),
+    mouseleave: () => setText('Shopping cart'),
+  });
+  return () => remove();
+}, []);
+```
+
+## Links
+
+- [GitHub](https://github.com/webeach/event-manager)
+- [npm](https://www.npmjs.com/package/@webeach/event-manager)
+- [Changelog](https://github.com/webeach/event-manager/blob/main/CHANGELOG.md)
