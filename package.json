@@ -1,6 +1,6 @@
 {
   "name": "@webeach/event-manager",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "EventManager is a library for simplifying event handling in JavaScript",
   "keywords": [
     "EventDispatcher",
