@@ -4,22 +4,29 @@ import {
   EventManagerEventTypeKey,
 } from './types';
 
+/** Returns true if the value is an instance of Event. */
 export function validateEventObject(event: unknown): event is Event {
   return event instanceof Event;
 }
 
+/** Returns true if the value is a non-empty string (valid event type name). */
 export function validateEventType<
   CustomEventMap extends EventManagerCustomEventMap,
 >(eventType: unknown): eventType is EventManagerEventTypeKey<CustomEventMap> {
   return typeof eventType === 'string' && eventType !== '';
 }
 
+/** Returns true if the value is a function (a valid event handler). */
 export function validateHandler(
   handler: unknown,
 ): handler is EventManagerEventBaseHandler<Event> {
   return typeof handler === 'function';
 }
 
+/**
+ * Returns true if the value is a valid handler or a non-empty array of handlers.
+ * Each element of an array is checked individually with validateHandler.
+ */
 export function validateHandlerList(
   handlerList: unknown,
 ): handlerList is
@@ -30,8 +37,12 @@ export function validateHandlerList(
     : validateHandler(handlerList);
 }
 
+/**
+ * Returns true if the value implements the EventTarget interface.
+ * Checks for addEventListener, removeEventListener, and dispatchEvent methods
+ * instead of using instanceof, which does not work across realms.
+ */
 export function validateTargetType(target: any): target is EventTarget {
-  // return target instanceof EventTarget
   return (
     typeof target.addEventListener === 'function' &&
     typeof target.removeEventListener === 'function' &&

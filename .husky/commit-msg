@@ -1,3 +1,1 @@
-commitlint --edit
-yarn lint-staged
-yarn lint:types
+npx --no -- commitlint --edit "$1"

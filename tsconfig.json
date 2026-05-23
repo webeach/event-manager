@@ -1,21 +1,18 @@
 {
   "compilerOptions": {
-    "baseUrl": ".",
-    "target": "ESNext",
+    "target": "ES2022",
     "module": "ESNext",
+    "moduleResolution": "bundler",
     "lib": ["dom", "dom.iterable", "esnext"],
-    "esModuleInterop": true,
-    "forceConsistentCasingInFileNames": true,
     "strict": true,
-    "allowJs": true,
-    "moduleResolution": "node",
-    "resolveJsonModule": true,
-    "noEmit": true,
-    "experimentalDecorators": true,
-    "emitDecoratorMetadata": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
     "noUncheckedIndexedAccess": true,
-    "noImplicitOverride": true
+    "noImplicitOverride": true,
+    "outDir": "dist",
+    "declaration": true,
+    "declarationMap": true,
+    "sourceMap": true
   },
-  "include": ["**/*.ts", "**/*.tsx", "**/*.js", "**/*.jsx"],
-  "exclude": ["lib", "node_modules"]
+  "include": ["src/**/*", "__tests__/**/*"]
 }

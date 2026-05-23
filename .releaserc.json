@@ -6,20 +6,20 @@
       "prerelease": "rc"
     }
   ],
-  "verifyConditions": [
-    "@semantic-release/changelog",
-    "@semantic-release/git",
-    "semantic-release-yarn"
-  ],
-  "prepare": [
-    "@semantic-release/changelog",
-    "@semantic-release/git",
-    "semantic-release-yarn"
-  ],
   "plugins": [
-    "@semantic-release/commit-analyzer",
+    [
+      "@semantic-release/commit-analyzer",
+      {
+        "preset": "conventionalcommits",
+        "presetConfig": {
+          "preMajor": true
+        }
+      }
+    ],
     "@semantic-release/release-notes-generator",
+    "@semantic-release/changelog",
+    "@semantic-release/npm",
     "@semantic-release/git",
-    "semantic-release-yarn"
+    "@semantic-release/github"
   ]
 }

@@ -1,5 +1,7 @@
-import { EventManager } from '../../modules/EventManager';
-import { listen } from '../listen';
+import { vi } from 'vitest';
+
+import { listen } from '../src/functions/listen';
+import { EventManager } from '../src/modules/EventManager';
 
 describe('Check the listen function', () => {
   test('should return an instance of the EventManager class', () => {
@@ -45,7 +47,7 @@ describe('Check the listen function', () => {
   });
 
   test('should verify the event trigger on DOM element click', () => {
-    const clickHandler = jest.fn();
+    const clickHandler = vi.fn();
 
     const element = document.createElement('div');
     const domListener = listen(element);
@@ -59,7 +61,7 @@ describe('Check the listen function', () => {
   });
 
   test('should verify the absence of an event on DOM element click', () => {
-    const clickHandler = jest.fn();
+    const clickHandler = vi.fn();
 
     const element = document.createElement('div');
     const domListener = listen(element);
@@ -73,7 +75,7 @@ describe('Check the listen function', () => {
   });
 
   test('should verify the triggering of multiple events on DOM element click', () => {
-    const clickHandlerList = Array.from(Array(10), () => jest.fn());
+    const clickHandlerList = Array.from(Array(10), () => vi.fn());
 
     const element = document.createElement('div');
     const domListener = listen(element);
@@ -89,7 +91,7 @@ describe('Check the listen function', () => {
   });
 
   test('should verify the absence of multiple events on DOM element click', () => {
-    const clickHandlerList = Array.from(Array(10), () => jest.fn());
+    const clickHandlerList = Array.from(Array(10), () => vi.fn());
 
     const element = document.createElement('div');
     const domListener = listen(element);
@@ -105,7 +107,7 @@ describe('Check the listen function', () => {
   });
 
   test('should verify the multiple triggering of an event on DOM element click', () => {
-    const clickHandler = jest.fn();
+    const clickHandler = vi.fn();
 
     const element = document.createElement('div');
     const domListener = listen(element);
@@ -121,7 +123,7 @@ describe('Check the listen function', () => {
   });
 
   test('should verify the triggering of an event with once on DOM element click', () => {
-    const clickHandler = jest.fn();
+    const clickHandler = vi.fn();
 
     const element = document.createElement('div');
     const domListener = listen(element);
@@ -137,8 +139,8 @@ describe('Check the listen function', () => {
   });
 
   test('should verify different event triggers on the DOM element', () => {
-    const clickHandler = jest.fn();
-    const focusHandler = jest.fn();
+    const clickHandler = vi.fn();
+    const focusHandler = vi.fn();
 
     const element = document.createElement('button');
     const domListener = listen(element);
@@ -159,8 +161,8 @@ describe('Check the listen function', () => {
   });
 
   test('should verify different triggers of multiple events on the DOM element', () => {
-    const clickHandlerList = Array.from(Array(10), () => jest.fn());
-    const focusHandlerList = Array.from(Array(10), () => jest.fn());
+    const clickHandlerList = Array.from(Array(10), () => vi.fn());
+    const focusHandlerList = Array.from(Array(10), () => vi.fn());
 
     const element = document.createElement('button');
     const domListener = listen(element);
@@ -185,8 +187,8 @@ describe('Check the listen function', () => {
   });
 
   test('should verify that the handler map is passed as a parameter for different triggers of multiple events on the DOM element', () => {
-    const clickHandlerList = Array.from(Array(10), () => jest.fn());
-    const focusHandlerList = Array.from(Array(10), () => jest.fn());
+    const clickHandlerList = Array.from(Array(10), () => vi.fn());
+    const focusHandlerList = Array.from(Array(10), () => vi.fn());
 
     const element = document.createElement('button');
 
@@ -212,8 +214,8 @@ describe('Check the listen function', () => {
   });
 
   test('should verify the absence of different multiple event triggers on the DOM element', () => {
-    const clickHandlerList = Array.from(Array(10), () => jest.fn());
-    const focusHandlerList = Array.from(Array(10), () => jest.fn());
+    const clickHandlerList = Array.from(Array(10), () => vi.fn());
+    const focusHandlerList = Array.from(Array(10), () => vi.fn());
 
     const element = document.createElement('button');
     const domListener = listen(element);
@@ -238,8 +240,8 @@ describe('Check the listen function', () => {
   });
 
   test('should verify different multiple event triggers on the DOM element', () => {
-    const clickHandler = jest.fn();
-    const focusHandler = jest.fn();
+    const clickHandler = vi.fn();
+    const focusHandler = vi.fn();
 
     const element = document.createElement('button');
     const domListener = listen(element);
@@ -263,8 +265,8 @@ describe('Check the listen function', () => {
   });
 
   test('should verify that the handler map is passed as a parameter for different multiple event triggers on the DOM element', () => {
-    const clickHandler = jest.fn();
-    const focusHandler = jest.fn();
+    const clickHandler = vi.fn();
+    const focusHandler = vi.fn();
 
     const element = document.createElement('button');
 
@@ -289,8 +291,8 @@ describe('Check the listen function', () => {
   });
 
   test('should verify different multiple event triggers with once on the DOM element', () => {
-    const clickHandler = jest.fn();
-    const focusHandler = jest.fn();
+    const clickHandler = vi.fn();
+    const focusHandler = vi.fn();
 
     const element = document.createElement('button');
     const domListener = listen(element);
@@ -314,7 +316,7 @@ describe('Check the listen function', () => {
   });
 
   test('should verify the event trigger on window click', () => {
-    const clickHandler = jest.fn();
+    const clickHandler = vi.fn();
 
     const windowListener = listen(window);
 
@@ -327,7 +329,7 @@ describe('Check the listen function', () => {
   });
 
   test('should verify the absence of an event on window click', () => {
-    const clickHandler = jest.fn();
+    const clickHandler = vi.fn();
 
     const windowListener = listen(window);
 
@@ -340,7 +342,7 @@ describe('Check the listen function', () => {
   });
 
   test('should verify the triggering of multiple events on window click', () => {
-    const clickHandlerList = Array.from(Array(10), () => jest.fn());
+    const clickHandlerList = Array.from(Array(10), () => vi.fn());
 
     const windowListener = listen(window);
 
@@ -355,7 +357,7 @@ describe('Check the listen function', () => {
   });
 
   test('should verify the absence of multiple events on window click', () => {
-    const clickHandlerList = Array.from(Array(10), () => jest.fn());
+    const clickHandlerList = Array.from(Array(10), () => vi.fn());
 
     const windowListener = listen(window);
 
@@ -370,7 +372,7 @@ describe('Check the listen function', () => {
   });
 
   test('should verify the multiple triggering of an event on window click', () => {
-    const clickHandler = jest.fn();
+    const clickHandler = vi.fn();
 
     const windowListener = listen(window);
 
@@ -385,7 +387,7 @@ describe('Check the listen function', () => {
   });
 
   test('should verify the triggering of an event with once on window click', () => {
-    const clickHandler = jest.fn();
+    const clickHandler = vi.fn();
 
     const windowListener = listen(window);
 
@@ -400,8 +402,8 @@ describe('Check the listen function', () => {
   });
 
   test('should verify different event triggers on the window', () => {
-    const clickHandler = jest.fn();
-    const focusHandler = jest.fn();
+    const clickHandler = vi.fn();
+    const focusHandler = vi.fn();
 
     const windowListener = listen(window);
 
@@ -419,8 +421,8 @@ describe('Check the listen function', () => {
   });
 
   test('should verify different triggers of multiple events on the window', () => {
-    const clickHandlerList = Array.from(Array(10), () => jest.fn());
-    const focusHandlerList = Array.from(Array(10), () => jest.fn());
+    const clickHandlerList = Array.from(Array(10), () => vi.fn());
+    const focusHandlerList = Array.from(Array(10), () => vi.fn());
 
     const windowListener = listen(window);
 
@@ -442,8 +444,8 @@ describe('Check the listen function', () => {
   });
 
   test('should verify that the handler map is passed as a parameter for different triggers of multiple events on the window', () => {
-    const clickHandlerList = Array.from(Array(10), () => jest.fn());
-    const focusHandlerList = Array.from(Array(10), () => jest.fn());
+    const clickHandlerList = Array.from(Array(10), () => vi.fn());
+    const focusHandlerList = Array.from(Array(10), () => vi.fn());
 
     listen(window, {
       click: clickHandlerList,
@@ -465,8 +467,8 @@ describe('Check the listen function', () => {
   });
 
   test('should verify the absence of different multiple event triggers on the window', () => {
-    const clickHandlerList = Array.from(Array(10), () => jest.fn());
-    const focusHandlerList = Array.from(Array(10), () => jest.fn());
+    const clickHandlerList = Array.from(Array(10), () => vi.fn());
+    const focusHandlerList = Array.from(Array(10), () => vi.fn());
 
     const windowListener = listen(window);
 
@@ -488,8 +490,8 @@ describe('Check the listen function', () => {
   });
 
   test('should verify different multiple event triggers on the window', () => {
-    const clickHandler = jest.fn();
-    const focusHandler = jest.fn();
+    const clickHandler = vi.fn();
+    const focusHandler = vi.fn();
 
     const windowListener = listen(window);
 
@@ -509,8 +511,8 @@ describe('Check the listen function', () => {
   });
 
   test('should verify that the handler map is passed as a parameter for different multiple event triggers on the window', () => {
-    const clickHandler = jest.fn();
-    const focusHandler = jest.fn();
+    const clickHandler = vi.fn();
+    const focusHandler = vi.fn();
 
     listen(window, {
       click: clickHandler,
@@ -530,8 +532,8 @@ describe('Check the listen function', () => {
   });
 
   test('should verify different multiple event triggers with once on the window', () => {
-    const clickHandler = jest.fn();
-    const focusHandler = jest.fn();
+    const clickHandler = vi.fn();
+    const focusHandler = vi.fn();
 
     const windowListener = listen(window);
 
@@ -551,7 +553,7 @@ describe('Check the listen function', () => {
   });
 
   test('should verify the event trigger on custom listener', () => {
-    const customHandler = jest.fn();
+    const customHandler = vi.fn();
 
     const customListener = listen();
 
@@ -564,7 +566,7 @@ describe('Check the listen function', () => {
   });
 
   test('should verify the absence of an event on custom listener', () => {
-    const customHandler = jest.fn();
+    const customHandler = vi.fn();
 
     const customListener = listen();
 
@@ -577,7 +579,7 @@ describe('Check the listen function', () => {
   });
 
   test('should verify the triggering of multiple events on custom listener', () => {
-    const customHandlerList = Array.from(Array(10), () => jest.fn());
+    const customHandlerList = Array.from(Array(10), () => vi.fn());
 
     const customListener = listen();
 
@@ -592,7 +594,7 @@ describe('Check the listen function', () => {
   });
 
   test('should verify the absence of multiple events on custom listener', () => {
-    const customHandlerList = Array.from(Array(10), () => jest.fn());
+    const customHandlerList = Array.from(Array(10), () => vi.fn());
 
     const customListener = listen();
 
@@ -607,7 +609,7 @@ describe('Check the listen function', () => {
   });
 
   test('should verify the multiple triggering of an event on custom listener', () => {
-    const customHandlerList = jest.fn();
+    const customHandlerList = vi.fn();
 
     const customListener = listen();
 
@@ -622,7 +624,7 @@ describe('Check the listen function', () => {
   });
 
   test('should verify the triggering of an event with once on custom listener', () => {
-    const customHandler = jest.fn();
+    const customHandler = vi.fn();
 
     const customListener = listen();
 
@@ -637,8 +639,8 @@ describe('Check the listen function', () => {
   });
 
   test('should verify different event triggers on custom listener', () => {
-    const customHandlerOne = jest.fn();
-    const customHandlerTwo = jest.fn();
+    const customHandlerOne = vi.fn();
+    const customHandlerTwo = vi.fn();
 
     const customListener = listen();
 
@@ -656,8 +658,8 @@ describe('Check the listen function', () => {
   });
 
   test('should verify different triggers of multiple events on custom listener', () => {
-    const customHandlerListOne = Array.from(Array(10), () => jest.fn());
-    const customHandlerListTwo = Array.from(Array(10), () => jest.fn());
+    const customHandlerListOne = Array.from(Array(10), () => vi.fn());
+    const customHandlerListTwo = Array.from(Array(10), () => vi.fn());
 
     const customListener = listen();
 
@@ -679,8 +681,8 @@ describe('Check the listen function', () => {
   });
 
   test('should verify that the handler map is passed as a parameter for different triggers of multiple events on custom listener', () => {
-    const customHandlerListOne = Array.from(Array(10), () => jest.fn());
-    const customHandlerListTwo = Array.from(Array(10), () => jest.fn());
+    const customHandlerListOne = Array.from(Array(10), () => vi.fn());
+    const customHandlerListTwo = Array.from(Array(10), () => vi.fn());
 
     const customListener = listen(null, {
       one: customHandlerListOne,
@@ -702,8 +704,8 @@ describe('Check the listen function', () => {
   });
 
   test('should verify the absence of different multiple event triggers on custom listener', () => {
-    const customHandlerListOne = Array.from(Array(10), () => jest.fn());
-    const customHandlerListTwo = Array.from(Array(10), () => jest.fn());
+    const customHandlerListOne = Array.from(Array(10), () => vi.fn());
+    const customHandlerListTwo = Array.from(Array(10), () => vi.fn());
 
     const customListener = listen();
 
@@ -725,8 +727,8 @@ describe('Check the listen function', () => {
   });
 
   test('should verify the absence of multiple different event triggers on a custom listener when all events are removed without specifying individual ones.', () => {
-    const customHandlerListOne = Array.from(Array(10), () => jest.fn());
-    const customHandlerListTwo = Array.from(Array(10), () => jest.fn());
+    const customHandlerListOne = Array.from(Array(10), () => vi.fn());
+    const customHandlerListTwo = Array.from(Array(10), () => vi.fn());
 
     const customListener = listen();
 
@@ -748,8 +750,8 @@ describe('Check the listen function', () => {
   });
 
   test('should verify different multiple event triggers on custom listener', () => {
-    const customHandlerOne = jest.fn();
-    const customHandlerTwo = jest.fn();
+    const customHandlerOne = vi.fn();
+    const customHandlerTwo = vi.fn();
 
     const customListener = listen();
 
@@ -769,8 +771,8 @@ describe('Check the listen function', () => {
   });
 
   test('should verify that the handler map is passed as a parameter for different multiple event triggers on custom listener', () => {
-    const customHandlerOne = jest.fn();
-    const customHandlerTwo = jest.fn();
+    const customHandlerOne = vi.fn();
+    const customHandlerTwo = vi.fn();
 
     const customListener = listen(null, {
       one: customHandlerOne,
@@ -790,8 +792,8 @@ describe('Check the listen function', () => {
   });
 
   test('should verify different multiple event triggers with once on custom listener', () => {
-    const customHandlerOne = jest.fn();
-    const customHandlerTwo = jest.fn();
+    const customHandlerOne = vi.fn();
+    const customHandlerTwo = vi.fn();
 
     const customListener = listen();
 
@@ -811,7 +813,7 @@ describe('Check the listen function', () => {
   });
 
   test('should verify the event trigger with an object passed on custom listener', () => {
-    const customHandler = jest.fn();
+    const customHandler = vi.fn();
 
     const customListener = listen();
 
@@ -824,7 +826,7 @@ describe('Check the listen function', () => {
   });
 
   test('should verify the event trigger with a detail parameter passed on custom listener', () => {
-    const customHandler = jest.fn();
+    const customHandler = vi.fn();
 
     const customListener = listen();
 

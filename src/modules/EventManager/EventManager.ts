@@ -13,6 +13,20 @@ import {
   validateTargetType,
 } from './utils';
 
+/**
+ * Manages event subscriptions for a given EventTarget.
+ *
+ * Tracks all registered handlers internally so they can be removed by type
+ * or all at once, even when no direct reference to the handler is kept.
+ *
+ * @template Target - The EventTarget type (Window, HTMLElement, or a custom EventTarget).
+ * @template CustomEventMap - A map of custom event names to their Event types.
+ *
+ * @example
+ * const manager = new EventManager(window);
+ * manager.add('click', (e) => console.log(e));
+ * manager.remove('click');
+ */
 export class EventManager<
   Target extends EventTarget,
   CustomEventMap extends EventManagerCustomEventMap,
@@ -22,6 +36,11 @@ export class EventManager<
 
   private readonly target: Target;
 
+  /**
+   * @param target - The EventTarget to attach events to.
+   * @param initialHandlerMap - Optional map of event types to handlers registered immediately.
+   * @throws {TypeError} If target does not implement the EventTarget interface.
+   */
   constructor(
     target: Target,
     initialHandlerMap: EventManagerHandlerMap<
@@ -52,6 +71,16 @@ export class EventManager<
     }
   }
 
+  /**
+   * Adds one or more event handlers for the given event type.
+   *
+   * @param type - The event type to listen for.
+   * @param handlers - A handler function or array of handler functions.
+   * @param options - Optional listener options (capture, once).
+   * @returns `this` for chaining.
+   * @throws {TypeError} If type is not a non-empty string.
+   * @throws {TypeError} If handlers is not a function or array of functions.
+   */
   public add<EventType extends EventManagerEventType<Target, CustomEventMap>>(
     type: EventType,
     handlers: EventManagerEventHandler<Target, EventType, CustomEventMap>,
@@ -86,6 +115,14 @@ export class EventManager<
     return this;
   }
 
+  /**
+   * Adds one or more event handlers using the capture phase.
+   * Shorthand for `add(type, handlers, { capture: true })`.
+   *
+   * @param type - The event type to listen for.
+   * @param handlers - A handler function or array of handler functions.
+   * @returns `this` for chaining.
+   */
   public capture<
     EventType extends EventManagerEventType<Target, CustomEventMap>,
   >(
@@ -97,6 +134,14 @@ export class EventManager<
     });
   }
 
+  /**
+   * Adds one or more event handlers that fire at most once.
+   * Shorthand for `add(type, handlers, { once: true })`.
+   *
+   * @param type - The event type to listen for.
+   * @param handlers - A handler function or array of handler functions.
+   * @returns `this` for chaining.
+   */
   public once<EventType extends EventManagerEventType<Target, CustomEventMap>>(
     type: EventType,
     handlers: EventManagerEventHandler<Target, EventType, CustomEventMap>,
@@ -106,6 +151,17 @@ export class EventManager<
     });
   }
 
+  /**
+   * Removes event handlers for the given event type(s).
+   * Pass no argument (or `null`) to remove all registered handlers.
+   *
+   * Only removes handlers that were registered through this EventManager instance.
+   * Handlers added directly via addEventListener are not affected.
+   *
+   * @param type - The event type, array of event types, or null/undefined to remove all.
+   * @returns `this` for chaining.
+   * @throws {TypeError} If any provided type is not a non-empty string.
+   */
   public remove<
     EventType extends EventManagerEventType<Target, CustomEventMap>,
   >(type: EventType | EventType[] | null = null) {
@@ -133,6 +189,15 @@ export class EventManager<
     return this;
   }
 
+  /**
+   * Dispatches an event by type name with an optional detail payload,
+   * or dispatches an existing Event object directly.
+   *
+   * @param event - The event type string or an Event instance.
+   * @param detail - Optional detail payload (only used when event is a string).
+   * @returns `this` for chaining.
+   * @throws {TypeError} If the argument is neither a non-empty string nor an Event instance.
+   */
   trigger<EventType extends EventManagerEventType<Target, CustomEventMap>>(
     event: EventType,
     detail?: unknown,
@@ -154,6 +219,7 @@ export class EventManager<
     throw new TypeError('Parameter "event" must be a Event');
   }
 
+  /** Removes all registered handlers from the target and clears internal state. */
   private removeAllHandlers() {
     this.handlerSerializedMap.forEach((targetHandlerList, eventType) => {
       targetHandlerList.forEach(([handler, options]) => {

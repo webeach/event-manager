@@ -1,15 +1,102 @@
-# `EventManager`
+<div align="center">
+  <p>
+    <img alt="event-manager" src="./assets/logo.svg" width="640">
+  </p>
+  <p>
+    <a href="https://www.npmjs.com/package/@webeach/event-manager">
+      <img src="https://img.shields.io/npm/v/@webeach/event-manager?style=flat-square&labelColor=0A1A3D&color=2E6BFF" alt="npm version" />
+    </a>
+    <a href="https://github.com/webeach/event-manager/actions">
+      <img src="https://img.shields.io/github/actions/workflow/status/webeach/event-manager/ci.yml?style=flat-square&labelColor=0A1A3D&color=2E6BFF" alt="build" />
+    </a>
+    <a href="https://www.npmjs.com/package/@webeach/event-manager">
+      <img src="https://img.shields.io/npm/dw/@webeach/event-manager?style=flat-square&labelColor=0A1A3D&color=2E6BFF" alt="npm downloads" />
+    </a>
+    <a href="https://github.com/webeach/event-manager/blob/main/LICENSE">
+      <img src="https://img.shields.io/npm/l/@webeach/event-manager?style=flat-square&labelColor=0A1A3D&color=2E6BFF" alt="license" />
+    </a>
+    <a href="https://bundlephobia.com/package/@webeach/event-manager">
+      <img src="https://img.shields.io/bundlephobia/minzip/@webeach/event-manager?style=flat-square&labelColor=0A1A3D&color=2E6BFF" alt="bundle size" />
+    </a>
+  </p>
+  <p><a href="./README.md">🇺🇸 English</a> | <a href="./README.ru.md">🇷🇺 Русский</a></p>
+  <p>A lightweight library for simplifying event handling in JavaScript and TypeScript.</p>
+</div>
 
-[![https://www.npmjs.com/package/@webeach/event-manager](https://img.shields.io/npm/v/@webeach/event-manager.svg)](https://www.npmjs.com/package/@webeach/event-manager)
-[![https://www.npmjs.com/package/@webeach/event-manager](https://img.shields.io/npm/dw/@webeach/event-manager.svg)](https://www.npmjs.com/package/@webeach/event-manager)
+---
 
-**EventManager** is a library for simplifying event handling in JavaScript. With this package, you can easily manage event subscriptions, remove them, and handle them in a more convenient way.
+## 💎 Features
 
-Main features of this library:
+- Compact and intuitive event handler management
+- Handle multiple events simultaneously with a single call
+- Full TypeScript support with automatic event type inference
+- Works with `window`, DOM elements, and custom event buses
+- Zero runtime dependencies
 
-+ Compact and intuitive event handler management.
-+ Handling multiple events simultaneously.
-+ Type support for custom event objects.
+---
+
+## 💡 The Problem
+
+Working with native browser events has a few rough edges that add up quickly.
+
+**Removing a listener requires keeping an exact reference to the function.** An anonymous function passed to `addEventListener` can never be removed — you have to store every handler in a variable beforehand:
+
+```js
+// ❌ This does nothing — a new function object is created each time
+element.addEventListener('click', () => doSomething());
+element.removeEventListener('click', () => doSomething());
+
+// ✅ Only this works
+function handleClick() {
+  doSomething();
+}
+element.addEventListener('click', handleClick);
+element.removeEventListener('click', handleClick);
+```
+
+**With multiple events, it turns into a lot of boilerplate.** You have to store every reference separately, repeat the target on every line, and then carefully mirror the same calls to remove them:
+
+```js
+const handleClick = () => {
+  /* ... */
+};
+const handleFocus = () => {
+  /* ... */
+};
+const handleKeydown = () => {
+  /* ... */
+};
+
+button.addEventListener('click', handleClick);
+button.addEventListener('focus', handleFocus);
+button.addEventListener('keydown', handleKeydown);
+
+// Later, to clean up...
+button.removeEventListener('click', handleClick);
+button.removeEventListener('focus', handleFocus);
+button.removeEventListener('keydown', handleKeydown);
+```
+
+**Options must match exactly.** If you registered a listener with `{ capture: true }`, you must pass the same option to `removeEventListener` — forget it, and the handler stays attached silently.
+
+**`event-manager` solves this.** It tracks all registered handlers internally, so you never have to hold references yourself. Clean up one event, several, or all of them in a single call:
+
+```js
+const listener = listen(button, {
+  click: () => {
+    /* ... */
+  },
+  focus: () => {
+    /* ... */
+  },
+  keydown: () => {
+    /* ... */
+  },
+});
+
+// Remove everything — no references, no repetition
+listener.remove();
+```
 
 ---
 
@@ -19,10 +106,25 @@ Main features of this library:
 npm install @webeach/event-manager
 ```
 
-or
+```bash
+pnpm add @webeach/event-manager
+```
 
 ```bash
 yarn add @webeach/event-manager
+```
+
+### Browser via CDN
+
+No build step needed — load directly in the browser via [unpkg](https://unpkg.com) or [jsDelivr](https://www.jsdelivr.com):
+
+```html
+<script type="module">
+  import { listen } from 'https://unpkg.com/@webeach/event-manager';
+
+  listen(document.getElementById('my-button'))
+    .add('click', () => console.log('clicked!'));
+</script>
 ```
 
 ---
@@ -58,8 +160,9 @@ import { listen } from '@webeach/event-manager';
 
 const myButton = document.getElementById('my-button');
 
-const myButtonListener = listen(myButton)
-  .add('click', () => console.log('Button clicked!'));
+const myButtonListener = listen(myButton).add('click', () =>
+  console.log('Button clicked!'),
+);
 
 // Unsubscribe from the event after 10 seconds
 window.setTimeout(() => {
@@ -67,7 +170,7 @@ window.setTimeout(() => {
 }, 10000);
 ```
 
-### Custom event manager object
+### Custom event bus
 
 ```js
 import { listen } from '@webeach/event-manager';
@@ -78,12 +181,9 @@ myListener
   .add('test', () => console.log('Event "test" triggered'))
   .add('hello', (event) => console.log(`Hello, ${event.detail.name}!`));
 
-// Trigger events after 3 seconds
 window.setTimeout(() => {
   myListener.trigger('test');
-  myListener.trigger('hello', {
-    name: 'Alex',
-  });
+  myListener.trigger('hello', { name: 'Alex' });
 }, 3000);
 ```
 
@@ -99,137 +199,134 @@ windowListener
   .add('resize', () => console.log('Resize event triggered'))
   .add('scroll', () => console.log('Scroll event triggered'));
 
-// Unsubscribe from all events after 10 seconds
 window.setTimeout(() => {
   windowListener.remove();
   // or: windowListener.remove(['focus', 'resize', 'scroll']);
 }, 3000);
 ```
 
-### Handling multiple events
+### Handling multiple handlers
 
 ```js
 import { listen } from '@webeach/event-manager';
 
 const myButton = document.getElementById('my-button');
-
 const myButtonListener = listen(myButton);
 
 // Both handlers will be executed
-myButtonListener.add('click', () => console.log('Button clicked!'));
-myButtonListener.add('click', () => console.log('Button clicked!'));
+myButtonListener.add('click', () => console.log('Handler A'));
+myButtonListener.add('click', () => console.log('Handler B'));
 
-// Both handlers will be executed
+// Pass an array of handlers at once
 myButtonListener.add('focus', [
-  () => console.log('Button focused!'),
-  () => console.log('Button focused!'),
+  () => console.log('Focus handler A'),
+  () => console.log('Focus handler B'),
 ]);
 ```
 
 ---
 
-## 🛠 API
+## 🛠️ API
 
-The `EventManager` object provides the following methods for managing event handlers:
+### `listen(target?, handlers?)`
+
+Creates an `EventManager` for the given target. Pass `null` or no argument to create a standalone custom event bus.
+
+```ts
+listen(window);
+listen(element, { click: handler });
+listen(); // custom event bus
+```
 
 ### `add(type, handler | handler[], options?)`
 
-Adds a new event handler to the listener.
+Adds one or more event handlers.
 
-| Parameter | Type                | Description                                                                                                                                          | Example             |
-|-----------|---------------------|------------------------------------------------------------------------------------------------------------------------------------------------------|---------------------|
-| `type`    | `string`            | The type of event.                                                                                                                                   | `"click"`, `"focus` |
-| `handler` | `function`, `array` | A function or an array of functions to be executed when the event is triggered. The function also receives the `event` object containing event data. | `(event) => {}`     |
-| `options` | `object`            | An optional object with additional settings: `capture` (event capturing phase), `once` (event will be triggered only once).                          |                     |
+| Parameter | Type                     | Description                                       |
+| --------- | ------------------------ | ------------------------------------------------- |
+| `type`    | `string`                 | Event type name, e.g. `"click"`                   |
+| `handler` | `function \| function[]` | Handler function or array of handlers             |
+| `options` | `object`                 | Optional: `{ capture?: boolean, once?: boolean }` |
 
 ### `capture(type, handler | handler[])`
 
-A convenient shortcut for `add(type, handler, { capture: true })`.
+Shorthand for `add(type, handler, { capture: true })`.
 
 ### `once(type, handler | handler[])`
 
-A convenient shortcut for `add(type, handler, { once: true })`.
+Shorthand for `add(type, handler, { once: true })`.
 
 ### `remove(type | type[])`
 
-Removes event handlers from the listener.
+Removes handlers for the given event type(s). Only affects handlers registered through this instance.
 
-| Parameter | Type                 | Description                                                       | Example                         |
-|-----------|----------------------|-------------------------------------------------------------------|---------------------------------|
-| `type`    | `string`, `string[]` | The type or array of types of events to remove from the listener. | `"click"`, `["click", "focus"]` |
-
-❗️ Note:
-+ This only removes events that were assigned using the listener. Events assigned with addEventListener will be ignored.
+| Parameter | Type                 | Description                            |
+| --------- | -------------------- | -------------------------------------- |
+| `type`    | `string \| string[]` | Event type or array of types to remove |
 
 ### `remove()`
 
-Removes all event handlers from the listener.
-
-❗️ Note:
-+ To remove all event handlers from the listener, call `remove` without any parameters.
-+ This only removes events that were assigned using the listener. Events assigned with addEventListener will be ignored.
+Removes all handlers registered through this instance.
 
 ### `trigger(type, detail?)`
 
-Triggers a specific event.
+Dispatches a `CustomEvent` with the given type and optional detail payload.
 
-| Parameter | Type     | Description                                   | Example            |
-|-----------|----------|-----------------------------------------------|--------------------|
-| `type`    | `string` | The type of event to trigger.                 | `"click"`          |
-| `detail`  | `object` | An optional object to pass as `event.detail`. | `{ name: 'Alex' }` |
+| Parameter | Type     | Description                     |
+| --------- | -------- | ------------------------------- |
+| `type`    | `string` | Event type to dispatch          |
+| `detail`  | `any`    | Optional `event.detail` payload |
 
 ### `trigger(event)`
 
-Triggers a specific event object.
+Dispatches an existing `Event` object directly.
 
-| Parameter | Type    | Description                                       | Example                   |
-|-----------|---------|---------------------------------------------------|---------------------------|
-| `event`   | `Event` | An event object inherited from the `Event` class. | `new MouseEvent('click')` |
+| Parameter | Type    | Description                   |
+| --------- | ------- | ----------------------------- |
+| `event`   | `Event` | An Event instance to dispatch |
 
 ---
 
-## 🧩 Type Support
+## 🧩 TypeScript
 
-This package is fully compatible with `TypeScript` and automatically infers the type of events based on the observed object.
-
-You can define your own custom event interface (see example below).
+The library is fully typed and automatically infers event types based on the observed target.
 
 ```ts
 import { listen } from '@webeach/event-manager';
 
-interface MyCustomGlobalHandlers {
-  one: CustomEvent,
-  hello: CustomEvent<{ name: string }>,
-}
-
-const windowListener = listen<Window, MyCustomGlobalHandlers>(window);
-
-windowListener.add('one', (event) => {
-  console.log('Event "one" triggered');
+// Window events — fully typed
+const windowListener = listen(window);
+windowListener.add('resize', (event) => {
+  // event is UIEvent
 });
 
-windowListener.add('hello', (event) => {
+// Define custom event types
+interface MyEvents {
+  hello: CustomEvent<{ name: string }>;
+  ping: CustomEvent;
+}
+
+const bus = listen<EventTarget, MyEvents>();
+
+bus.add('hello', (event) => {
   console.log(`Hello, ${event.detail.name}!`);
 });
 
-windowListener.trigger('one');
-windowListener.trigger('hello', {
-  name: 'Alex',
-});
+bus.trigger('hello', { name: 'Alex' });
 ```
 
 ---
 
-## 📖 Real Examples
+## 📖 Real-world Examples
 
-### Text change on `hover`
-
-In this example, the button text changes when hovered.
+### Text change on hover
 
 ```ts
 import { listen } from '@webeach/event-manager';
 
-const basketButton = document.querySelector('.basket-button') as HTMLButtonElement;
+const basketButton = document.querySelector(
+  '.basket-button',
+) as HTMLButtonElement;
 
 listen(basketButton, {
   mouseenter: () => {
@@ -238,49 +335,37 @@ listen(basketButton, {
   mouseleave: () => {
     basketButton.textContent = 'Shopping basket';
   },
-})
+});
 ```
 
-### Tracking clicks on links
-
-This example tracks all clicks on document links to send statistics.
+### Tracking link clicks
 
 ```ts
 import { listen } from '@webeach/event-manager';
 
-listen(document)
-  .add('click', ({ target }) => {
-    const nearestAnchor = target.closest('a') as HTMLAnchorElement | null;
-    
-    if (
-      nearestAnchor !== null &&
-      nearestAnchor.href !== '' && (
-        nearestAnchor.hostname !== window.location.hostname ||
-        nearestAnchor.pathname !== window.location.pathname ||
-        nearestAnchor.search !== window.location.search)
-    ) {
-      window.navigator.sendBeacon(ENV.CLICK_TRACKER_URL, {
-        type: 'linkClick',
-        data: {
-          link: nearestAnchor.href,
-        },
-      });
-    }
-  });
+listen(document).add('click', ({ target }) => {
+  const anchor = (target as Element).closest('a') as HTMLAnchorElement | null;
+
+  if (
+    anchor !== null &&
+    anchor.href !== '' &&
+    (anchor.hostname !== window.location.hostname ||
+      anchor.pathname !== window.location.pathname ||
+      anchor.search !== window.location.search)
+  ) {
+    navigator.sendBeacon('/track', JSON.stringify({ link: anchor.href }));
+  }
+});
 ```
 
 ### Working with `postMessage`
-
-In this example, the `window` listens for a `message` event to adjust the height of an `iframe`.
 
 ```ts
 import { listen } from '@webeach/event-manager';
 
 const banner = document.getElementById('banner') as HTMLIFrameElement;
 
-const windowListener = listen(window);
-
-windowListener.add('message', (event) => {
+listen(window).add('message', (event) => {
   const { type, height } = event.data || {};
 
   if (type === 'setHeight' && typeof height === 'number') {
@@ -289,9 +374,7 @@ windowListener.add('message', (event) => {
 });
 ```
 
-### Tracking document scroll in `React`
-
-This example shows a `React` component that tracks document scrolling and displays a "scroll to top" button based on the scroll position.
+### Tracking scroll in React
 
 ```tsx
 import { FC, PropsWithChildren, useEffect, useState } from 'react';
@@ -299,55 +382,46 @@ import { listen } from '@webeach/event-manager';
 
 const SHOW_TOP_BUTTON_SCROLL_OFFSET = 120;
 
-export const PageLayout: FC<PropsWithChildren> = () => {
-  const { children } = props;
-    
+export const PageLayout: FC<PropsWithChildren> = ({ children }) => {
   const [topButtonShown, setTopButtonShown] = useState(false);
-  
-  const handleTopButtonClick = () => {
-    window.scrollTo(0, 0);
-  };
-  
+
   useEffect(() => {
     const { remove } = listen(window, {
       scroll: () => {
-        setTopButtonShown(
-          window.scrollY >= SHOW_TOP_BUTTON_SCROLL_OFFSET,
-        );
+        setTopButtonShown(window.scrollY >= SHOW_TOP_BUTTON_SCROLL_OFFSET);
       },
     });
-    
+
     return () => {
       remove();
     };
-  }, [topButtonShown]);
-  
+  }, []);
+
   return (
     <div className="page-layout">
-      <main className="page-layout__content">
-        {children}
-      </main>
+      <main className="page-layout__content">{children}</main>
       {topButtonShown && (
         <button
           aria-label="Scroll to top"
           className="page-layout__top-button"
-          onClick={handleTopButtonClick}
+          onClick={() => window.scrollTo(0, 0)}
         />
       )}
-    </div>    
+    </div>
   );
 };
 ```
 
 ---
 
-## 📄 License
+## 👨‍💻 Author
 
-This project is distributed under the MIT License.
+Development and support: [Ruslan Martynov](https://github.com/ruslan-mart)
+
+If you have suggestions or found a bug, feel free to open an issue or submit a pull request.
 
 ---
 
-## 🌐 Languages
+## 📄 License
 
-+ [🇺🇸 English](./README.md)
-+ [🇷🇺 Русский](./README.ru.md)
+This package is distributed under the [MIT License](./LICENSE).
