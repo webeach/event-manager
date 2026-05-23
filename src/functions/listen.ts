@@ -39,7 +39,7 @@ export function listen<
   handlers?: EventManagerHandlerMap<Target, CustomEventMap>,
 ): EventManager<Target, CustomEventMap> {
   if (target === null) {
-    return new EventManager<Target, EventManagerCustomEventMap>(
+    return new EventManager<Target, CustomEventMap>(
       new EventTarget() as Target,
       handlers,
     );

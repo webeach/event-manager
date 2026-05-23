@@ -102,7 +102,7 @@
   "size-limit": [
     {
       "path": "./dist/browser/index.js",
-      "limit": "1 KB"
+      "limit": "1.5 KB"
     }
   ],
   "engines": {

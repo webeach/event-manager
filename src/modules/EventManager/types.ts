@@ -1,7 +1,12 @@
 /** A map of event names to their corresponding Event objects for custom events. */
 export type EventManagerCustomEventMap = Record<string, Event>;
 
-/** A generic handler map accepting any event name mapped to a handler or handler array. */
+/**
+ * A generic handler map accepting any event name mapped to a handler or handler array.
+ *
+ * Intersected with strongly-typed maps to allow custom event names on DOM/Window targets
+ * (e.g. when listening to user-defined events dispatched via `trigger`).
+ */
 export type EventManagerAnyHandlerMap = Record<
   string,
   ((event: Event) => void) | ReadonlyArray<(event: Event) => void>
@@ -50,11 +55,16 @@ export type EventManagerEventMap<
     ? GlobalEventHandlersEventMap
     : CustomEventMap;
 
-/** All possible event type keys for the given target and custom event map. */
+/**
+ * All possible event type keys for the given target and custom event map.
+ *
+ * The `(string & {})` intersection preserves IDE autocomplete for known
+ * literal keys while still allowing arbitrary string event names.
+ */
 export type EventManagerEventType<
   Target extends EventTarget,
   CustomEventMap extends EventManagerCustomEventMap,
-> = keyof EventManagerEventMap<Target, CustomEventMap> | string;
+> = keyof EventManagerEventMap<Target, CustomEventMap> | (string & {});
 
 /** Union of all possible event type keys across all supported targets. */
 export type EventManagerEventTypeKey<
@@ -63,7 +73,7 @@ export type EventManagerEventTypeKey<
   | EventManagerWindowEventType
   | EventManagerDOMEventType
   | keyof CustomEventMap
-  | string;
+  | (string & {});
 
 /** All known DOM event types from GlobalEventHandlersEventMap. */
 export type EventManagerDOMEventType = keyof GlobalEventHandlersEventMap;
@@ -115,20 +125,21 @@ export type EventManagerHandlerOptions = {
   capture?: boolean;
   /** Whether the handler should fire at most once. @default false */
   once?: boolean;
+  /**
+   * Indicates that the handler will never call `preventDefault()`.
+   * Allows the browser to optimize scroll/touch event performance.
+   * @default false
+   */
+  passive?: boolean;
 };
 
 /**
  * Internal storage map: event type → list of [handler, options] tuples.
  * Used to track registered listeners so they can be removed later.
  */
-export type EventManagerHandlerSerializedMap<
+export type EventManagerSubscriptionMap<
   CustomEventMap extends EventManagerCustomEventMap,
 > = Map<
   EventManagerEventTypeKey<CustomEventMap>,
-  Array<
-    [
-      EventManagerEventBaseHandler<Event>,
-      Readonly<Required<EventManagerHandlerOptions>>,
-    ]
-  >
+  Array<[EventManagerEventBaseHandler<Event>, EventManagerHandlerOptions]>
 >;

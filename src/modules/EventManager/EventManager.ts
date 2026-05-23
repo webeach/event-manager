@@ -1,10 +1,11 @@
 import {
   EventManagerCustomEventMap,
+  EventManagerEventBaseHandler,
   EventManagerEventHandler,
   EventManagerEventType,
   EventManagerHandlerMap,
   EventManagerHandlerOptions,
-  EventManagerHandlerSerializedMap,
+  EventManagerSubscriptionMap,
 } from './types';
 import {
   validateEventObject,
@@ -31,7 +32,7 @@ export class EventManager<
   Target extends EventTarget,
   CustomEventMap extends EventManagerCustomEventMap,
 > {
-  private readonly handlerSerializedMap: EventManagerHandlerSerializedMap<CustomEventMap> =
+  private readonly subscriptions: EventManagerSubscriptionMap<CustomEventMap> =
     new Map();
 
   private readonly target: Target;
@@ -49,11 +50,13 @@ export class EventManager<
     > | null = null,
   ) {
     if (!validateTargetType(target)) {
-      throw new TypeError('Parameter "target" must be a EventTarget');
+      throw new TypeError('Parameter "target" must be an EventTarget');
     }
 
     this.target = target;
 
+    // Bound so that methods retain the correct `this` when destructured:
+    // const { remove } = listen(button);
     this.add = this.add.bind(this);
     this.capture = this.capture.bind(this);
     this.once = this.once.bind(this);
@@ -65,6 +68,8 @@ export class EventManager<
         if (
           Object.prototype.hasOwnProperty.call(initialHandlerMap, eventType)
         ) {
+          // `as never` works around a TS inference limitation with the
+          // overloaded conditional handler-map types — runtime is sound.
           this.add(eventType, initialHandlerMap[eventType] as never);
         }
       }
@@ -75,41 +80,61 @@ export class EventManager<
    * Adds one or more event handlers for the given event type.
    *
    * @param type - The event type to listen for.
-   * @param handlers - A handler function or array of handler functions.
-   * @param options - Optional listener options (capture, once).
+   * @param handler - A handler function or array of handler functions.
+   * @param options - Optional listener options (capture, once, passive, signal).
    * @returns `this` for chaining.
    * @throws {TypeError} If type is not a non-empty string.
-   * @throws {TypeError} If handlers is not a function or array of functions.
+   * @throws {TypeError} If handler is not a function or an array of functions.
    */
   public add<EventType extends EventManagerEventType<Target, CustomEventMap>>(
     type: EventType,
-    handlers: EventManagerEventHandler<Target, EventType, CustomEventMap>,
+    handler: EventManagerEventHandler<Target, EventType, CustomEventMap>,
     options: EventManagerHandlerOptions = {},
   ) {
     if (!validateEventType<EventManagerCustomEventMap>(type)) {
-      throw new TypeError('Parameter "type" must be a Event');
+      throw new TypeError(
+        `Parameter "type" must be a non-empty string, got: ${String(type)}`,
+      );
     }
 
-    if (!validateHandlerList(handlers)) {
-      throw new TypeError('Parameter "handlers" must be a EventHandlerMap');
+    if (!validateHandlerList(handler)) {
+      throw new TypeError(
+        'Parameter "handler" must be a function or an array of functions',
+      );
     }
 
-    if (!this.handlerSerializedMap.has(type)) {
-      this.handlerSerializedMap.set(type, []);
+    if (!this.subscriptions.has(type)) {
+      this.subscriptions.set(type, []);
     }
 
-    const finalOptions = Object.freeze<Required<EventManagerHandlerOptions>>({
+    // `once` is intentionally excluded — we implement it ourselves below.
+    const listenerOptions: EventManagerHandlerOptions = {
       capture: options.capture ?? false,
-      once: options.once ?? false,
-    });
+      passive: options.passive ?? false,
+    };
 
-    const eventHandlerList = Array.isArray(handlers) ? handlers : [handlers];
+    const handlerList = Array.isArray(handler) ? handler : [handler];
 
-    const targetHandlerList = this.handlerSerializedMap.get(type)!;
+    const targetHandlerList = this.subscriptions.get(type)!;
 
-    eventHandlerList.forEach((handler) => {
-      targetHandlerList.push([handler, finalOptions]);
-      this.target.addEventListener(type, handler, finalOptions);
+    handlerList.forEach((originalHandler) => {
+      let registeredHandler: EventManagerEventBaseHandler<Event> =
+        originalHandler;
+
+      if (options.once) {
+        registeredHandler = (event) => {
+          this.target.removeEventListener(
+            type,
+            registeredHandler,
+            listenerOptions,
+          );
+          this.unregisterHandler(type, registeredHandler);
+          originalHandler(event);
+        };
+      }
+
+      targetHandlerList.push([registeredHandler, listenerOptions]);
+      this.target.addEventListener(type, registeredHandler, listenerOptions);
     });
 
     return this;
@@ -117,36 +142,36 @@ export class EventManager<
 
   /**
    * Adds one or more event handlers using the capture phase.
-   * Shorthand for `add(type, handlers, { capture: true })`.
+   * Shorthand for `add(type, handler, { capture: true })`.
    *
    * @param type - The event type to listen for.
-   * @param handlers - A handler function or array of handler functions.
+   * @param handler - A handler function or array of handler functions.
    * @returns `this` for chaining.
    */
   public capture<
     EventType extends EventManagerEventType<Target, CustomEventMap>,
   >(
     type: EventType,
-    handlers: EventManagerEventHandler<Target, EventType, CustomEventMap>,
+    handler: EventManagerEventHandler<Target, EventType, CustomEventMap>,
   ) {
-    return this.add(type, handlers, {
+    return this.add(type, handler, {
       capture: true,
     });
   }
 
   /**
    * Adds one or more event handlers that fire at most once.
-   * Shorthand for `add(type, handlers, { once: true })`.
+   * Shorthand for `add(type, handler, { once: true })`.
    *
    * @param type - The event type to listen for.
-   * @param handlers - A handler function or array of handler functions.
+   * @param handler - A handler function or array of handler functions.
    * @returns `this` for chaining.
    */
   public once<EventType extends EventManagerEventType<Target, CustomEventMap>>(
     type: EventType,
-    handlers: EventManagerEventHandler<Target, EventType, CustomEventMap>,
+    handler: EventManagerEventHandler<Target, EventType, CustomEventMap>,
   ) {
-    return this.add(type, handlers, {
+    return this.add(type, handler, {
       once: true,
     });
   }
@@ -158,6 +183,9 @@ export class EventManager<
    * Only removes handlers that were registered through this EventManager instance.
    * Handlers added directly via addEventListener are not affected.
    *
+   * Validation is performed atomically: if any provided type is invalid,
+   * a TypeError is thrown before any handler is removed.
+   *
    * @param type - The event type, array of event types, or null/undefined to remove all.
    * @returns `this` for chaining.
    * @throws {TypeError} If any provided type is not a non-empty string.
@@ -166,23 +194,37 @@ export class EventManager<
     EventType extends EventManagerEventType<Target, CustomEventMap>,
   >(type: EventType | EventType[] | null = null) {
     if (type === null) {
-      return this.removeAllHandlers();
+      this.subscriptions.forEach((handlerList, eventType) => {
+        handlerList.forEach(([handler, options]) => {
+          // `as never` — see note in constructor.
+          this.target.removeEventListener(eventType as never, handler, options);
+        });
+      });
+      this.subscriptions.clear();
+      return this;
     }
 
     const eventTypeList = Array.isArray(type) ? type : [type];
 
+    // Validate all types first so we never end up in a partially-removed state.
     eventTypeList.forEach((eventType) => {
       if (!validateEventType<EventManagerCustomEventMap>(eventType)) {
-        throw new TypeError('Parameter "type" must be a Event');
+        throw new TypeError(
+          `Parameter "type" must be a non-empty string, got: ${String(eventType)}`,
+        );
       }
+    });
 
-      const eventHandlerList = this.handlerSerializedMap.get(eventType) ?? null;
+    eventTypeList.forEach((eventType) => {
+      // `as never` — TS cannot reconcile the generic EventType with the
+      // subscription map's key type through the conditional `EventManagerEventMap`.
+      const handlerList = this.subscriptions.get(eventType as never) ?? null;
 
-      if (eventHandlerList !== null) {
-        eventHandlerList.forEach(([handler, options]) => {
-          this.target.removeEventListener(eventType, handler, options);
+      if (handlerList !== null) {
+        handlerList.forEach(([handler, options]) => {
+          this.target.removeEventListener(eventType as never, handler, options);
         });
-        this.handlerSerializedMap.delete(eventType);
+        this.subscriptions.delete(eventType as never);
       }
     });
 
@@ -198,11 +240,10 @@ export class EventManager<
    * @returns `this` for chaining.
    * @throws {TypeError} If the argument is neither a non-empty string nor an Event instance.
    */
-  trigger<EventType extends EventManagerEventType<Target, CustomEventMap>>(
-    event: EventType,
-    detail?: unknown,
-  ): this;
-  trigger(event: Event): this;
+  public trigger<
+    EventType extends EventManagerEventType<Target, CustomEventMap>,
+  >(event: EventType, detail?: unknown): this;
+  public trigger(event: Event): this;
   public trigger(...params: unknown[]) {
     const [event, detail] = params;
 
@@ -216,19 +257,34 @@ export class EventManager<
       return this;
     }
 
-    throw new TypeError('Parameter "event" must be a Event');
+    throw new TypeError(
+      'Parameter "event" must be a non-empty string or an Event instance',
+    );
   }
 
-  /** Removes all registered handlers from the target and clears internal state. */
-  private removeAllHandlers() {
-    this.handlerSerializedMap.forEach((targetHandlerList, eventType) => {
-      targetHandlerList.forEach(([handler, options]) => {
-        this.target.removeEventListener(eventType as never, handler, options);
-      });
-    });
+  /**
+   * Removes a single handler entry from the internal subscription map.
+   * Used by `once`-wrappers and `signal`-abort listeners to keep state consistent.
+   */
+  private unregisterHandler(
+    type: EventManagerEventType<Target, CustomEventMap>,
+    handler: EventManagerEventBaseHandler<Event>,
+  ) {
+    // `as never` — see note in `remove`.
+    const handlerList = this.subscriptions.get(type as never);
 
-    this.handlerSerializedMap.clear();
+    if (handlerList === undefined) {
+      return;
+    }
 
-    return this;
+    const index = handlerList.findIndex(([entry]) => entry === handler);
+
+    if (index !== -1) {
+      handlerList.splice(index, 1);
+    }
+
+    if (handlerList.length === 0) {
+      this.subscriptions.delete(type as never);
+    }
   }
 }

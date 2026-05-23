@@ -42,10 +42,16 @@ export function validateHandlerList(
  * Checks for addEventListener, removeEventListener, and dispatchEvent methods
  * instead of using instanceof, which does not work across realms.
  */
-export function validateTargetType(target: any): target is EventTarget {
+export function validateTargetType(target: unknown): target is EventTarget {
+  if (target === null || typeof target !== 'object') {
+    return false;
+  }
+
+  const candidate = target as Partial<EventTarget>;
+
   return (
-    typeof target.addEventListener === 'function' &&
-    typeof target.removeEventListener === 'function' &&
-    typeof target.dispatchEvent === 'function'
+    typeof candidate.addEventListener === 'function' &&
+    typeof candidate.removeEventListener === 'function' &&
+    typeof candidate.dispatchEvent === 'function'
   );
 }

@@ -122,8 +122,9 @@ yarn add @webeach/event-manager
 <script type="module">
   import { listen } from 'https://unpkg.com/@webeach/event-manager';
 
-  listen(document.getElementById('my-button'))
-    .add('click', () => console.log('clicked!'));
+  listen(document.getElementById('my-button')).add('click', () =>
+    console.log('clicked!'),
+  );
 </script>
 ```
 

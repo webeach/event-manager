@@ -122,8 +122,9 @@ No build step needed — load directly in the browser via [unpkg](https://unpkg.
 <script type="module">
   import { listen } from 'https://unpkg.com/@webeach/event-manager';
 
-  listen(document.getElementById('my-button'))
-    .add('click', () => console.log('clicked!'));
+  listen(document.getElementById('my-button')).add('click', () =>
+    console.log('clicked!'),
+  );
 </script>
 ```
 
